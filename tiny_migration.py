@@ -1,11 +1,14 @@
+from mysql.connector import connect, Error, errorcode
 from glob import glob
-from mysql.connector import connect
 
-DB_USER = "root"
-DB_PASS = ""
-DB_HOST = "localhost"
-DB_PORT = 3306
-MIGRATIONS_PATH = "migrations/*"
+config = {
+    "user": "root",
+    "password": "",
+    "host": "127.0.0.1",
+    "database": "employees",
+    "raise_on_warnings": True,
+}
+MIGRATIONS_PATH = "migrations/[0-9]**.sql"
 MIGRATIONS_MANIFEST = []
 MIGRATIONS_TABLE = """
 CREATE TABLE IF NOT EXISTS migrations (
@@ -23,7 +26,15 @@ def list_migrations():
 
 
 def connect_to_db():
-    return connect(user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
+    try:
+        return connect(**config)
+    except Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+        else:
+            print(err)
 
 
 def run_migration(script):
