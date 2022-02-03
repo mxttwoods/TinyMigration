@@ -1,11 +1,11 @@
 from mysql.connector import connect, Error, errorcode
 from glob import glob
 
-config = {
+CONFIG = {
     "user": "root",
     "password": "",
     "host": "127.0.0.1",
-    "database": "employees",
+    "database": "test_database",
     "raise_on_warnings": True,
 }
 MIGRATIONS_PATH = "migrations/[0-9]**.sql"
@@ -27,7 +27,7 @@ def list_migrations():
 
 def connect_to_db():
     try:
-        return connect(**config)
+        return connect(**CONFIG)
     except Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
@@ -57,10 +57,10 @@ def main():
     list_migrations()
     connection = connect_to_db()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM migrations")
-    migrations_run = [row[1] for row in cursor.fetchall()]
+    cursor.execute("SELECT migration FROM migrations")
+    existing_migrations = cursor.fetchall()
     for migration in MIGRATIONS_MANIFEST:
-        if migration not in migrations_run:
+        if migration not in existing_migrations:
             run_migration(migration)
             cursor.execute(
                 "INSERT INTO migrations (migration) VALUES (%s)", (migration,)
