@@ -3,6 +3,10 @@ from configparser import ConfigParser
 from os import path
 from mysql.connector import connect, Error, errorcode
 
+__author__ = "Matthew Woods"
+__email__ = "Matthew Woods <mxttwoods@gmail.com>"
+__version__ = "0.1.0-alpha"
+
 parser = ConfigParser()
 parser.read("config.ini")
 CONFIG = {
