@@ -56,7 +56,7 @@ def run_migration(script):
 
 
 def main():
-    print("")
+    print("Running migrations...")
     list_migrations()
     connection = connect_to_db()
     cursor = connection.cursor()
