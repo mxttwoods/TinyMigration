@@ -2,7 +2,6 @@ from glob import glob
 from configparser import ConfigParser
 from os import path
 from mysql.connector import connect, Error, errorcode
-from pprint import pprint
 
 parser = ConfigParser()
 parser.read("config.ini")
@@ -14,7 +13,6 @@ CONFIG = {
     "raise_on_warnings": True,
 }
 MIGRATIONS_PATH = "migrations/[0-9]**.sql"
-MIGRATIONS_MANIFEST = []
 MIGRATIONS_TABLE = """
 CREATE TABLE IF NOT EXISTS migrations (
     id INT NOT NULL AUTO_INCREMENT,
@@ -25,25 +23,19 @@ CREATE TABLE IF NOT EXISTS migrations (
 """
 
 
-def list_migrations():
-    for file in glob(MIGRATIONS_PATH):
-        MIGRATIONS_MANIFEST.append(file)
-
-
 def connect_to_db():
     try:
         return connect(**CONFIG)
     except Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
+            print("Something is wrong with your user name or password", "\n", err)
         elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
+            print("Database does not exist", "\n", err)
         else:
             print(err)
 
 
-def run_migration(script):
-    base_name = path.basename(script)
+def run_migration(base_name, script):
     print(f"Running migration: {base_name}")
     with open(script) as f:
         sql = f.read()
@@ -56,17 +48,20 @@ def run_migration(script):
 
 
 def main():
+    manifest = []
     print("Running migrations...")
-    list_migrations()
+    for file in glob(MIGRATIONS_PATH):
+        print(f"Found migration: {file}")
+        manifest.append(file)
     connection = connect_to_db()
     cursor = connection.cursor()
     cursor.execute("SELECT migration FROM migrations")
     existing_migrations = cursor.fetchall()
-    pprint(existing_migrations)
-    for migration in MIGRATIONS_MANIFEST:
+    print("Existing migrations: ", "\n", existing_migrations)
+    for migration in manifest:
         base_name = path.basename(migration)
         if migration not in existing_migrations:
-            run_migration(migration)
+            run_migration(base_name, migration)
             cursor.execute(
                 "INSERT INTO migrations (migration) VALUES (%s)", (migration,)
             )
