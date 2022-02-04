@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS migrations (
     PRIMARY KEY (id)
 );
 """
+MIGRATIONS_SELECT = """
+SELECT migration FROM migrations;
+"""
+MIGRATIONS_INSERT = """
+INSERT INTO migrations (migration) VALUES (%s);
+"""
 
 
 def connect_to_db():
@@ -60,16 +66,14 @@ def main():
     connection = connect_to_db()
     cursor = connection.cursor()
     cursor.execute(MIGRATIONS_TABLE)
-    cursor.execute("SELECT migration FROM migrations")
+    cursor.execute(MIGRATIONS_SELECT)
     existing_migrations = cursor.fetchall()
     print("Existing migrations: ", "\n", existing_migrations)
     for migration in manifest:
         base_name = path.basename(migration)
         if migration not in existing_migrations:
             run_migration(base_name, migration)
-            cursor.execute(
-                "INSERT INTO migrations (migration) VALUES (%s)", (migration,)
-            )
+            cursor.execute(MIGRATIONS_INSERT, (migration,))
             connection.commit()
             print(f"Migration {base_name} added to database")
         else:
