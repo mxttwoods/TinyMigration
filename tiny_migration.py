@@ -55,6 +55,7 @@ def main():
         manifest.append(file)
     connection = connect_to_db()
     cursor = connection.cursor()
+    cursor.execute(MIGRATIONS_TABLE)
     cursor.execute("SELECT migration FROM migrations")
     existing_migrations = cursor.fetchall()
     print("Existing migrations: ", "\n", existing_migrations)
